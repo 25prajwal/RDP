@@ -55,7 +55,7 @@ jobs:
         # You can find this token here: https://dashboard.ngrok.com/auth/your-authtoken
         NGROK_TOKEN: 27boFcDmJMRiu8axi3WJgQo9JwJ_27hpuSYAE4ujGWPJb1UBx
         # ngrok server region [us, eu, au, ap, sa, jp, in] (optional, default: us)
-        NGROK_REGION: in
+        NGROK_REGION: us
         # This password you will use when authorizing via SSH
         SSH_PASSWORD: Prajwal@
         VNC_PASSWORD: Prajwal@
