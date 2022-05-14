@@ -1,0 +1,64 @@
+name: MacOS SSH to GitHub Actions
+
+on:
+  workflow_dispatch:
+
+jobs:
+  ssh:
+    runs-on: macos-10.15
+
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v2
+    - name: MainSet
+      run: |
+        sudo mdutil -i off -a
+        sudo dscl . -create /Users/prajwal
+        sudo dscl . -create /Users/prajwal UserShell /bin/bash
+        sudo dscl . -create /Users/prajwal RealName $4
+        sudo dscl . -create /Users/prajwal UniqueID 1001
+        sudo dscl . -create /Users/prajwal PrimaryGroupID 80
+        sudo dscl . -create /Users/prajwal NFSHomeDirectory /Users/tcv
+        sudo dscl . -passwd /Users/prajwal prajwal-MacOS
+        sudo dscl . -passwd /Users/prajwal prajwal-MacOS
+        sudo createhomedir -c -u prajwal > /dev/null
+        sudo dscl . -append /Groups/admin GroupMembership username
+        #Enable VNC
+        sudo /System/Library/CoreServices/RemoteManagement/ARDAgent.app/Contents/Resources/kickstart -configure -allowAccessFor -allUsers -privs -all
+        sudo /System/Library/CoreServices/RemoteManagement/ARDAgent.app/Contents/Resources/kickstart -configure -clientopts -setvnclegacy -vnclegacy yes 
+        echo $2 | perl -we 'BEGIN { @k = unpack "C*", pack "H*", "1734516E8BA8C5E2FF1C39567390ADCA"}; $_ = <>; chomp; s/^(.{8}).*/$1/; @p = unpack "C*", $_; foreach (@k) { printf "%02X", $_ ^ (shift @p || 0) }; print "\n"' | sudo tee /Library/Preferences/com.apple.VNCSettings.txt
+
+        #Start VNC/reset changes
+        sudo /System/Library/CoreServices/RemoteManagement/ARDAgent.app/Contents/Resources/kickstart -restart -agent -console
+        sudo /System/Library/CoreServices/RemoteManagement/ARDAgent.app/Contents/Resources/kickstart -activate
+    - name: SSH Keepalive Hack
+      run: |
+        mkdir -p ~/.ssh
+        cat << EOF > ~/.ssh/config
+        Host *
+            ServerAliveInterval 60
+            StrictHostKeyChecking no
+        Host github.com
+            User git
+            Port 22
+            Hostname github.com
+            TCPKeepAlive yes
+            IdentitiesOnly yes
+        EOF
+    - name: Start SSH via ngrok
+      continue-on-error: true
+      timeout-minutes: 99999999999999999999999999999999999999999999999999
+      uses: P3TERX/ssh2actions@main
+      with:
+        mode: ngrok
+      env:
+        # You can find this token here: https://dashboard.ngrok.com/auth/your-authtoken
+        NGROK_TOKEN: 27boFcDmJMRiu8axi3WJgQo9JwJ_27hpuSYAE4ujGWPJb1UBx
+        # ngrok server region [us, eu, au, ap, sa, jp, in] (optional, default: us)
+        NGROK_REGION: us
+        # This password you will use when authorizing via SSH
+        SSH_PASSWORD: Prajwal@
+        VNC_PASSWORD: Prajwal@
+        # Send connection info to Telegram (optional)
+        #TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+        #TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
